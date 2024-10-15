@@ -8,7 +8,6 @@ const DetailScreen = ({ route, navigation }) => {
   const orchid = route.params?.orchid;
   const [isFavorite, setIsFavorite] = useState(false);
 
-  // Check if the orchid is in favorites when the component is focused or orchid data changes
   useFocusEffect(
     React.useCallback(() => {
       const checkFavoriteStatus = async () => {
@@ -18,7 +17,6 @@ const DetailScreen = ({ route, navigation }) => {
             ? JSON.parse(savedFavorites)
             : [];
 
-          // Check if the orchid exists in favorites based on `id`
           setIsFavorite(favoriteOrchids.some((fav) => fav.id === orchid.id));
         } catch (error) {
           console.error("Error loading favorites: ", error);
@@ -31,7 +29,6 @@ const DetailScreen = ({ route, navigation }) => {
     }, [orchid])
   );
 
-  // Function to toggle the orchid as a favorite or remove it from favorites
   const toggleFavorite = async () => {
     if (!orchid) return;
 
@@ -41,12 +38,10 @@ const DetailScreen = ({ route, navigation }) => {
 
       let updatedFavorites;
       if (isFavorite) {
-        // Remove from favorites if already favorited
         updatedFavorites = favoriteOrchids.filter(
           (fav) => fav.id !== orchid.id
         );
       } else {
-        // Add to favorites if not favorited
         updatedFavorites = [...favoriteOrchids, orchid];
       }
 
@@ -60,28 +55,22 @@ const DetailScreen = ({ route, navigation }) => {
     }
   };
 
-  // Return "No Detail" message if the orchid is missing
   if (!orchid) {
     return <Text style={twrnc`text-center text-lg mt-9`}>No Detail</Text>;
   }
   return (
     <View style={twrnc`p-4`}>
-      {/* Orchid Image */}
       <Image source={{ uri: orchid.image }} style={twrnc`w-48 h-48 mx-auto`} />
 
-      {/* Orchid Name */}
       <Text style={twrnc`text-xl font-bold mt-4`}>{orchid.name}</Text>
 
-      {/* Orchid Category */}
       <Text style={twrnc`text-base mt-2`}>Category: {orchid.category}</Text>
 
-      {/* Orchid Nature and Rating */}
       <Text style={twrnc`text-base mt-2`}>
         Is Nature: {orchid.isNature ? "Yes" : "No"}
       </Text>
       <Text style={twrnc`text-base mt-2`}>Rating: {orchid.rating}</Text>
 
-      {/* Toggle Favorite Button */}
       <TouchableOpacity onPress={toggleFavorite} style={twrnc`mt-4`}>
         <Text
           style={twrnc`text-center text-lg ${

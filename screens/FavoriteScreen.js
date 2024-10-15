@@ -44,7 +44,7 @@ const FavoriteScreen = ({ navigation }) => {
           text: "OK",
           onPress: async () => {
             const updatedFavorites = favoriteOrchids.filter(
-              (fav) => fav.id !== orchid.id // Sử dụng `id` để tránh trùng lặp tên
+              (fav) => fav.id !== orchid.id 
             );
             setFavoriteOrchids(updatedFavorites);
             await AsyncStorage.setItem(

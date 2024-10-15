@@ -12,7 +12,6 @@ const EditOrchid = ({ route }) => {
 
   const updateOrchid = async () => {
     try {
-      // Use id instead of name for the PUT request
       await axios.put(
         `https://66fae8018583ac93b40a55e4.mockapi.io/peMMa301/${orchid.id}`,
         {

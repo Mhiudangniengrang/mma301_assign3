@@ -12,10 +12,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import twrnc from "twrnc";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
+import CreateOrchidForm from "./CreateOrchidForm";
 
 const HomeScreen = ({ route }) => {
   const [orchids, setOrchids] = useState([]);
   const [favorites, setFavorites] = useState([]);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -52,7 +54,7 @@ const HomeScreen = ({ route }) => {
             ? category.items.map((item) => ({
                 ...item,
                 category: category.name,
-                parentId: category.id, // Thêm thông tin parentId
+                parentId: category.id,
               }))
             : []
         );
@@ -103,18 +105,15 @@ const HomeScreen = ({ route }) => {
           text: "Delete",
           onPress: async () => {
             try {
-              // Bước 1: Lấy toàn bộ đối tượng parent (ví dụ: Cattleya với id = orchid.parentId)
               const response = await axios.get(
                 `https://670dca82073307b4ee4476f2.mockapi.io/api/orchid/${orchid.parentId}`
               );
 
               if (response.data && response.data.items) {
-                // Bước 2: Lọc bỏ item có id tương ứng ra khỏi danh sách items
                 const updatedItems = response.data.items.filter(
                   (item) => item.id !== orchid.id
                 );
 
-                // Bước 3: Cập nhật lại đối tượng parent với danh sách items đã xóa
                 await axios.put(
                   `https://670dca82073307b4ee4476f2.mockapi.io/api/orchid/${orchid.parentId}`,
                   {
@@ -123,7 +122,6 @@ const HomeScreen = ({ route }) => {
                   }
                 );
 
-                // Xóa mục khỏi danh sách local trong state
                 setOrchids((prevOrchids) =>
                   prevOrchids.filter((item) => item.id !== orchid.id)
                 );
@@ -185,6 +183,35 @@ const HomeScreen = ({ route }) => {
     </View>
   );
 
+  const handleAddOrchid = async (newOrchid) => {
+    try {
+      const response = await axios.get(
+        "https://670dca82073307b4ee4476f2.mockapi.io/api/orchid"
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        const flattenedData = response.data.flatMap((category) =>
+          category.items
+            ? category.items.map((item) => ({
+                ...item,
+                category: category.name,
+                parentId: category.id,
+              }))
+            : []
+        );
+        setOrchids(flattenedData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch updated orchids:", error);
+    }
+
+    setShowCreateForm(false);
+  };
+
+  const handleCancel = () => {
+    setShowCreateForm(false);
+  };
+
   return (
     <View style={twrnc`flex-1 bg-gray-100`}>
       <FlatList
@@ -193,6 +220,17 @@ const HomeScreen = ({ route }) => {
         renderItem={renderOrchid}
         contentContainerStyle={twrnc`p-4`}
       />
+
+      {showCreateForm && (
+        <CreateOrchidForm onAdd={handleAddOrchid} onCancel={handleCancel} />
+      )}
+
+      <TouchableOpacity
+        onPress={() => setShowCreateForm(true)}
+        style={twrnc`absolute bottom-8 right-8 bg-blue-500 p-3 rounded-full shadow-lg`}
+      >
+        <FontAwesome name="plus" size={24} color="white" />
+      </TouchableOpacity>
     </View>
   );
 };
