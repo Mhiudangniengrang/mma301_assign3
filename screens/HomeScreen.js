@@ -5,10 +5,7 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
-  Button,
   Alert,
-  TextInput,
-  Modal,
 } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,11 +16,6 @@ import { FontAwesome } from "@expo/vector-icons";
 const HomeScreen = ({ route }) => {
   const [orchids, setOrchids] = useState([]);
   const [favorites, setFavorites] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentOrchid, setCurrentOrchid] = useState({ name: "", image: "" });
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [error, setError] = useState("");
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -51,7 +43,7 @@ const HomeScreen = ({ route }) => {
   const fetchData = async () => {
     try {
       const response = await axios.get(
-        "https://66fae8018583ac93b40a55e4.mockapi.io/peMMa301"
+        "https://670dca82073307b4ee4476f2.mockapi.io/api/orchid"
       );
 
       if (response.data && Array.isArray(response.data)) {
@@ -60,6 +52,7 @@ const HomeScreen = ({ route }) => {
             ? category.items.map((item) => ({
                 ...item,
                 category: category.name,
+                parentId: category.id, // Thêm thông tin parentId
               }))
             : []
         );
@@ -97,97 +90,52 @@ const HomeScreen = ({ route }) => {
     }
   };
 
-  const deleteOrchid = async (name) => {
-    try {
-      const updatedOrchids = orchids.filter((orchid) => orchid.name !== name);
-      setOrchids(updatedOrchids);
-
-      // Optionally, update the API if needed, e.g., using axios
-    } catch (error) {
-      console.error("Error deleting orchid:", error);
-    }
-  };
-
-  const confirmDelete = (orchid) => {
+  const toggleDelete = async (orchid) => {
     Alert.alert(
       "Delete Orchid",
       `Are you sure you want to delete ${orchid.name}?`,
       [
-        { text: "Cancel", style: "cancel" },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
         {
           text: "Delete",
+          onPress: async () => {
+            try {
+              // Bước 1: Lấy toàn bộ đối tượng parent (ví dụ: Cattleya với id = orchid.parentId)
+              const response = await axios.get(
+                `https://670dca82073307b4ee4476f2.mockapi.io/api/orchid/${orchid.parentId}`
+              );
+
+              if (response.data && response.data.items) {
+                // Bước 2: Lọc bỏ item có id tương ứng ra khỏi danh sách items
+                const updatedItems = response.data.items.filter(
+                  (item) => item.id !== orchid.id
+                );
+
+                // Bước 3: Cập nhật lại đối tượng parent với danh sách items đã xóa
+                await axios.put(
+                  `https://670dca82073307b4ee4476f2.mockapi.io/api/orchid/${orchid.parentId}`,
+                  {
+                    ...response.data,
+                    items: updatedItems,
+                  }
+                );
+
+                // Xóa mục khỏi danh sách local trong state
+                setOrchids((prevOrchids) =>
+                  prevOrchids.filter((item) => item.id !== orchid.id)
+                );
+              }
+            } catch (error) {
+              console.error("Failed to delete orchid:", error);
+            }
+          },
           style: "destructive",
-          onPress: () => deleteOrchid(orchid.name),
         },
       ]
     );
-  };
-
-  const handleAddOrEdit = async () => {
-    if (!currentOrchid.name.trim() || !currentOrchid.image.trim()) {
-      setError("Both name and image URL are required.");
-      return;
-    }
-
-    if (!selectedCategory) {
-      setError("Category is required.");
-      return;
-    }
-
-    try {
-      const orchidData = {
-        ...currentOrchid,
-        category: selectedCategory,
-      };
-
-      if (isEditing) {
-        const updatedOrchids = orchids.map((orchid) => {
-          if (orchid.category === selectedCategory) {
-            const updatedItems = orchid.items.map((item) =>
-              item.name === currentOrchid.name ? orchidData : item
-            );
-            return { ...orchid, items: updatedItems };
-          }
-          return orchid;
-        });
-        setOrchids(updatedOrchids);
-
-        await axios.put(
-          `https://66fae8018583ac93b40a55e4.mockapi.io/peMMa301/${currentOrchid.id}`,
-          orchidData
-        );
-      } else {
-        const updatedOrchids = orchids.map((orchid) => {
-          if (orchid.name === selectedCategory) {
-            return { ...orchid, items: [...orchid.items, orchidData] };
-          }
-          return orchid;
-        });
-
-        setOrchids(updatedOrchids);
-
-        await axios.post(
-          "https://66fae8018583ac93b40a55e4.mockapi.io/peMMa301",
-          orchidData
-        );
-      }
-
-      setModalVisible(false);
-      setCurrentOrchid({ name: "", image: "" });
-      setSelectedCategory("");
-      setIsEditing(false);
-      setError("");
-    } catch (error) {
-      console.error("Error updating orchid:", error);
-    }
-  };
-
-  const openEditModal = (orchid) => {
-    setCurrentOrchid(orchid);
-    setSelectedCategory(orchid.category);
-    setIsEditing(true);
-    setModalVisible(true);
-    setError("");
   };
 
   const renderOrchid = ({ item }) => (
@@ -231,11 +179,7 @@ const HomeScreen = ({ route }) => {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => openEditModal(item)} style={twrnc`ml-4`}>
-        <FontAwesome name="edit" size={24} color="blue" />
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => confirmDelete(item)} style={twrnc`ml-4`}>
+      <TouchableOpacity style={twrnc`ml-4`} onPress={() => toggleDelete(item)}>
         <FontAwesome name="trash" size={24} color="red" />
       </TouchableOpacity>
     </View>
@@ -245,57 +189,10 @@ const HomeScreen = ({ route }) => {
     <View style={twrnc`flex-1 bg-gray-100`}>
       <FlatList
         data={orchids}
-        keyExtractor={(item) => item.name}
+        keyExtractor={(item) => item.id}
         renderItem={renderOrchid}
         contentContainerStyle={twrnc`p-4`}
       />
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View
-          style={twrnc`flex-1 justify-center items-center bg-black bg-opacity-50`}
-        >
-          <View style={twrnc`w-4/5 p-6 bg-white rounded-lg`}>
-            <Text style={twrnc`font-bold text-xl mb-4`}>
-              {isEditing ? "Edit Orchid" : "Create New Orchid"}
-            </Text>
-
-            {error ? (
-              <Text style={twrnc`text-red-500 mb-4`}>{error}</Text>
-            ) : null}
-
-            <TextInput
-              placeholder="Name"
-              value={currentOrchid.name}
-              onChangeText={(text) =>
-                setCurrentOrchid((prev) => ({ ...prev, name: text }))
-              }
-              style={twrnc`border border-gray-300 p-2 rounded mb-4`}
-            />
-            <TextInput
-              placeholder="Image URL"
-              value={currentOrchid.image}
-              onChangeText={(text) =>
-                setCurrentOrchid((prev) => ({ ...prev, image: text }))
-              }
-              style={twrnc`border border-gray-300 p-2 rounded mb-4`}
-            />
-            <Button
-              title={isEditing ? "Update Orchid" : "Add Orchid"}
-              onPress={handleAddOrEdit}
-            />
-            <Button
-              title="Cancel"
-              onPress={() => setModalVisible(false)}
-              color="red"
-            />
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
