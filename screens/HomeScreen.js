@@ -13,12 +13,15 @@ import twrnc from "twrnc";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
 import CreateOrchidForm from "./CreateOrchidForm";
+import EditOrchid from "./EditOrchid";
 
 const HomeScreen = ({ route }) => {
   const [orchids, setOrchids] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const navigation = useNavigation();
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [orchidToEdit, setOrchidToEdit] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -177,6 +180,16 @@ const HomeScreen = ({ route }) => {
         />
       </TouchableOpacity>
 
+      <TouchableOpacity
+        onPress={() => {
+          setOrchidToEdit(item);
+          setShowEditForm(true);
+        }}
+        style={twrnc`ml-4`}
+      >
+        <FontAwesome name="edit" size={24} color="blue" />
+      </TouchableOpacity>
+
       <TouchableOpacity style={twrnc`ml-4`} onPress={() => toggleDelete(item)}>
         <FontAwesome name="trash" size={24} color="red" />
       </TouchableOpacity>
@@ -207,6 +220,14 @@ const HomeScreen = ({ route }) => {
 
     setShowCreateForm(false);
   };
+  const handleEditOrchid = (updatedOrchid) => {
+    setOrchids((prevOrchids) =>
+      prevOrchids.map((orchid) =>
+        orchid.id === updatedOrchid.id ? updatedOrchid : orchid
+      )
+    );
+    setShowEditForm(false);
+  };
 
   const handleCancel = () => {
     setShowCreateForm(false);
@@ -223,6 +244,14 @@ const HomeScreen = ({ route }) => {
 
       {showCreateForm && (
         <CreateOrchidForm onAdd={handleAddOrchid} onCancel={handleCancel} />
+      )}
+
+      {showEditForm && orchidToEdit && (
+        <EditOrchid
+          orchid={orchidToEdit}
+          onEdit={handleEditOrchid}
+          onCancel={() => setShowEditForm(false)}
+        />
       )}
 
       <TouchableOpacity

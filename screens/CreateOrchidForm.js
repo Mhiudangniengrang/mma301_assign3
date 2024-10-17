@@ -19,8 +19,10 @@ const CreateOrchidForm = ({ onAdd, onCancel }) => {
   const [color, setColor] = useState("");
   const [bonus, setBonus] = useState("");
   const [origin, setOrigin] = useState("");
-  const [parentId, setParentId] = useState("1"); 
-
+  const [parentId, setParentId] = useState("1");
+  const [image, setImage] = useState(
+    "https://cdn.tgdd.vn/Files/2021/07/24/1370576/hoa-lan-tim-dac-diem-y-nghia-va-cach-trong-hoa-no-dep-202107242028075526.jpg"
+  );
   const createOrchid = async () => {
     if (!name || !weight || !price || !color || !bonus || !origin) {
       Alert.alert("Error", "Please fill out all fields.");
@@ -33,13 +35,13 @@ const CreateOrchidForm = ({ onAdd, onCancel }) => {
     else if (parentId === "3") category = "Phalaenopsis";
 
     const newOrchid = {
-      id: Math.random().toString(36).substring(2), 
+      id: Math.random().toString(36).substring(2),
       name,
       weight: parseInt(weight),
       rating,
       price: parseInt(price),
       isTopOfTheWeek: false,
-      image: "https://example.com/default-image.jpg", 
+      image,
       color,
       bonus,
       origin,
@@ -72,7 +74,7 @@ const CreateOrchidForm = ({ onAdd, onCancel }) => {
   };
 
   return (
-    <View style={twrnc`p-4 bg-white rounded-lg shadow-md`}>
+    <View style={twrnc`p-2 bg-white rounded-lg shadow-md`}>
       <Text style={twrnc`text-lg font-bold mb-4`}>Add New Orchid</Text>
 
       <TextInput
@@ -113,11 +115,17 @@ const CreateOrchidForm = ({ onAdd, onCancel }) => {
         value={origin}
         onChangeText={setOrigin}
       />
+        <TextInput
+        style={twrnc`border p-2 mb-2`}
+        placeholder="Image"
+        value={image}
+        onChangeText={setImage}
+      />
 
       <Text style={twrnc`mb-2`}>Select Orchid Type:</Text>
       <Picker
         selectedValue={parentId}
-        style={twrnc`border p-2 mb-2`}
+        style={twrnc`border mb-2`}
         onValueChange={(itemValue) => setParentId(itemValue)}
       >
         <Picker.Item label="Cattleya" value="1" />
@@ -125,7 +133,7 @@ const CreateOrchidForm = ({ onAdd, onCancel }) => {
         <Picker.Item label="Phalaenopsis" value="3" />
       </Picker>
 
-      <View style={twrnc`flex-row justify-between mt-4`}>
+      <View style={twrnc`flex-row justify-between `}>
         <Button title="Create Orchid" onPress={createOrchid} />
         <TouchableOpacity
           onPress={onCancel}
